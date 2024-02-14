@@ -31,7 +31,15 @@ import (
 func (s *composeService) injectSecrets(ctx context.Context, project *types.Project, service types.ServiceConfig, id string) error {
 	for _, config := range service.Secrets {
 		file := project.Secrets[config.Source]
-		if file.Environment == "" {
+		content := file.Content
+		if file.Environment != "" {
+			env, ok := project.Environment[file.Environment]
+			if !ok {
+				return fmt.Errorf("environment variable %q required by file %q is not set", file.Environment, file.Name)
+			}
+			content = env
+		}
+		if content == "" {
 			continue
 		}
 
@@ -41,11 +49,7 @@ func (s *composeService) injectSecrets(ctx context.Context, project *types.Proje
 			config.Target = "/run/secrets/" + config.Target
 		}
 
-		env, ok := project.Environment[file.Environment]
-		if !ok {
-			return fmt.Errorf("environment variable %q required by file %q is not set", file.Environment, file.Name)
-		}
-		b, err := createTar(env, types.FileReferenceConfig(config))
+		b, err := createTar(content, types.FileReferenceConfig(config))
 		if err != nil {
 			return err
 		}

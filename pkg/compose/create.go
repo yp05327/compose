@@ -957,7 +957,7 @@ func buildContainerSecretMounts(p types.Project, s types.ServiceConfig) ([]mount
 			return nil, errors.New("Docker Compose does not support secrets.*.template_driver")
 		}
 
-		if definedSecret.Environment != "" {
+		if definedSecret.Environment != "" || definedSecret.Content != "" {
 			continue
 		}
 
